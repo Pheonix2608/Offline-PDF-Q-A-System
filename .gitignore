@@ -1,0 +1,29 @@
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environment
+.venv/
+env/
+venv/
+
+# PyInstaller build
+dist/
+build/
+*.spec
+
+# Mac/Windows stuff
+.DS_Store
+Thumbs.db
+
+# Export files
+*.pdf
+*.json
+*.txt
+
+# Model weights (if any)
+*.bin
+
+# Logs
+*.log
