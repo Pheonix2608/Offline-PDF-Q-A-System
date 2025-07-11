@@ -1,169 +1,222 @@
-# from langchain_ollama import OllamaLLM
-# from langchain.prompts import PromptTemplate
-# from langchain_core.runnables import RunnableSequence
-# from langchain_core.runnables.history import RunnableWithMessageHistory
-# from langchain.memory import ConversationBufferMemory
-
-# # 🧠 Load Local Model (Ollama must be running!)
-# llm = OllamaLLM(model="mistral")  # llama2, phi3, gemma etc. also work
-
-# # 📋 Prompt Template
-# contextual_prompt = PromptTemplate(
-#     input_variables=["context", "question"],
-#     template="""
-# You are a helpful assistant answering based on the following document context.
-# Only respond based on the context. If unsure, say "I don't know".
-
-# Context:
-# {context}
-
-# Question:
-# {question}
-
-# Answer:"""
-# )
-
-# # 🧠 Summary Prompt
-# summary_prompt = PromptTemplate(
-#     input_variables=["text"],
-#     template="""
-# You are an AI assistant. Summarize the following document clearly and concisely in bullet points.
-
-# Document:
-# {text}
-
-# Summary:"""
-# )
-
-# # ✅ Summary Chain
-# summarize_chain = summary_prompt | llm
-
-# def summarize_text(text, max_chars=2000):
-#     short_text = text[:max_chars]  # keep inference fast
-#     return summarize_chain.invoke({"text": short_text})
-
-
-# # 🧠 No-Memory Q&A Chain
-# qa_chain = contextual_prompt | llm
-
-# def generate_answer(context_chunks, question):
-#     context = "\n".join(context_chunks)
-#     return qa_chain.invoke({"context": context, "question": question})
-
-
-# # 🧠 Memory Support
-# memory = ConversationBufferMemory(memory_key="chat_history", input_key="question", return_messages=True)
-
-# # 🔁 Memory-Enabled Chain
-# qa_chain_with_memory = RunnableWithMessageHistory(
-#     qa_chain,
-#     memory,
-#     input_messages_key="question",
-#     history_messages_key="chat_history"
-# )
-
-# def chat_with_memory(context_chunks, question):
-#     context = "\n".join(context_chunks)
-#     return qa_chain_with_memory.invoke(
-#         {"context": context, "question": question},
-#         config={"configurable": {"session_id": "pdf_session"}}
-#     )
-
-# def generate_answer_with_memory(context_chunks, question):
-#     return chat_with_memory(context_chunks, question)
-
-# def reset_memory():
-#     memory.clear()
-
-
 from langchain_ollama import OllamaLLM
 from langchain.prompts import PromptTemplate
 from langchain_core.runnables import RunnableSequence
 from langchain_core.runnables.history import RunnableWithMessageHistory
-from langchain.memory import ConversationBufferMemory
+from langchain_community.chat_message_histories import ChatMessageHistory
+from langchain_core.chat_history import BaseChatMessageHistory
+import traceback
 
-# Load model
-llm = OllamaLLM(model="mistral")
+# Initialize LLM with error handling
+try:
+    llm = OllamaLLM(model="mistral")
+    print("✅ Connected to Ollama with mistral model")
+except Exception as e:
+    print(f"❌ Failed to connect to Ollama: {e}")
+    print("Make sure Ollama is running and 'mistral' model is available")
+    print("Run: ollama run mistral")
+    raise
 
-# Prompt
+# Improved prompts
 contextual_prompt = PromptTemplate(
     input_variables=["context", "question"],
-    template="""
-You are a helpful assistant answering based on the following document context.
-Only respond based on the context. If unsure, say "I don't know".
+    template="""You are a helpful AI assistant analyzing documents. Use the provided context to answer questions accurately.
 
-Context:
+Context from documents:
 {context}
 
-Question:
-{question}
+Question: {question}
+
+Instructions:
+- Answer based only on the provided context
+- If the context doesn't contain relevant information, say "I don't have enough information in the documents to answer this question"
+- Be concise but thorough
+- Use specific details from the context when possible
 
 Answer:"""
 )
 
-qa_chain = contextual_prompt | llm
+summary_prompt = PromptTemplate(
+    input_variables=["text"],
+    template="""Summarize the following document content in a clear, structured way:
 
-# Session-based memory cache
-memory_sessions = {}
-
-def get_memory(session_id: str):
-    if session_id not in memory_sessions:
-        memory_sessions[session_id] = ConversationBufferMemory(
-            memory_key="chat_history",
-            input_key="question",
-            return_messages=True,
-        )
-    return memory_sessions[session_id]
-
-qa_chain_with_memory = RunnableWithMessageHistory(
-    qa_chain,
-    lambda session_id: get_memory(session_id),
-    input_messages_key="question",
-    history_messages_key="chat_history"
-)
-
-def generate_answer_with_memory(context_chunks, question, session_id="default"):
-    context = "\n".join(context_chunks)
-    return qa_chain_with_memory.invoke(
-        {"context": context, "question": question},
-        config={"configurable": {"session_id": session_id}}
-    )
-
-def summarize_text(text, max_chars=2000):
-    short_text = text[:max_chars]
-    summary_prompt = PromptTemplate(
-        input_variables=["text"],
-        template="""
-Summarize the following document clearly and concisely in bullet points.
-
-Document:
+Document Content:
 {text}
 
-Summary:
-"""
-    )
-    return (summary_prompt | llm).invoke({"text": short_text})
+Create a summary that includes:
+- Main topics covered
+- Key points and findings
+- Important details
 
-def reset_memory(session_id="default"):
-    if session_id in memory_sessions:
-        memory_sessions[session_id].clear()
+Summary:"""
+)
 
-
-# 🔮 Generate follow-up suggestions
 followup_prompt = PromptTemplate(
     input_variables=["question", "answer"],
-    template="""
-Based on the following Q&A, suggest 2–3 helpful follow-up questions the user might ask.
+    template="""Based on this Q&A exchange, suggest 3 relevant follow-up questions that would help the user explore the topic further.
 
 Question: {question}
 Answer: {answer}
 
-Follow-up Suggestions:
-"""
+Generate 3 specific, actionable follow-up questions that:
+1. Dive deeper into the topic
+2. Explore related aspects
+3. Clarify or expand on the answer
+
+Follow-up Questions:
+1."""
 )
 
+# Create chains
+qa_chain = contextual_prompt | llm
+summary_chain = summary_prompt | llm
 followup_chain = followup_prompt | llm
 
+# Session-based memory management using ChatMessageHistory
+store = {}
+
+def get_session_history(session_id: str) -> BaseChatMessageHistory:
+    if session_id not in store:
+        store[session_id] = ChatMessageHistory()
+    return store[session_id]
+
+# Memory-enabled chain
+qa_chain_with_memory = RunnableWithMessageHistory(
+    qa_chain,
+    get_session_history,
+    input_messages_key="question",
+    history_messages_key="chat_history",
+)
+
+def generate_answer_with_memory(context_chunks, question, session_id="default"):
+    """Generate answer using context and conversation memory"""
+    try:
+        if not context_chunks:
+            return "No relevant context found in the documents."
+        
+        context = "\n\n".join(context_chunks)
+        
+        # Limit context length to avoid token limits
+        if len(context) > 4000:
+            context = context[:4000] + "..."
+        
+        response = qa_chain_with_memory.invoke(
+            {"context": context, "question": question},
+            config={"configurable": {"session_id": session_id}}
+        )
+        
+        return response.strip()
+        
+    except Exception as e:
+        print(f"Error generating answer: {e}")
+        traceback.print_exc()
+        return f"Error generating response: {str(e)}"
+
+def generate_answer(context_chunks, question):
+    """Generate answer without memory (stateless)"""
+    try:
+        if not context_chunks:
+            return "No relevant context found in the documents."
+        
+        context = "\n\n".join(context_chunks)
+        
+        # Limit context length
+        if len(context) > 4000:
+            context = context[:4000] + "..."
+        
+        response = qa_chain.invoke({"context": context, "question": question})
+        return response.strip()
+        
+    except Exception as e:
+        print(f"Error generating answer: {e}")
+        return f"Error generating response: {str(e)}"
+
+def summarize_text(text, max_chars=3000):
+    """Summarize document text"""
+    try:
+        if not text or not text.strip():
+            return "No content to summarize."
+        
+        # Limit text length for faster processing
+        short_text = text[:max_chars]
+        if len(text) > max_chars:
+            short_text += "..."
+        
+        summary = summary_chain.invoke({"text": short_text})
+        return summary.strip()
+        
+    except Exception as e:
+        print(f"Error summarizing text: {e}")
+        return f"Error creating summary: {str(e)}"
+
 def generate_followups(question, answer):
-    result = followup_chain.invoke({"question": question, "answer": answer})
-    return [line.strip("-• \n") for line in result.strip().splitlines() if line.strip()]
+    """Generate follow-up question suggestions"""
+    try:
+        if not question or not answer:
+            return []
+        
+        # Limit input length
+        short_answer = answer[:1000] if len(answer) > 1000 else answer
+        
+        response = followup_chain.invoke({
+            "question": question,
+            "answer": short_answer
+        })
+        
+        # Parse response into individual questions
+        lines = response.strip().split('\n')
+        questions = []
+        
+        for line in lines:
+            line = line.strip()
+            if line and not line.startswith('Follow-up'):
+                # Remove numbering and clean up
+                clean_line = line.replace('1.', '').replace('2.', '').replace('3.', '')
+                clean_line = clean_line.replace('-', '').strip()
+                if clean_line and len(clean_line) > 10:
+                    questions.append(clean_line)
+        
+        return questions[:3]  # Return max 3 questions
+        
+    except Exception as e:
+        print(f"Error generating follow-ups: {e}")
+        return []
+
+def reset_memory(session_id="default"):
+    """Clear memory for a specific session"""
+    try:
+        if session_id in store:
+            store[session_id].clear()
+            print(f"✅ Memory cleared for session: {session_id}")
+        else:
+            print(f"No memory found for session: {session_id}")
+    except Exception as e:
+        print(f"Error clearing memory: {e}")
+
+def list_sessions():
+    """List all active memory sessions"""
+    return list(store.keys())
+
+# Test connection on import
+def test_ollama_connection():
+    """Test if Ollama is responding"""
+    try:
+        response = llm.invoke("Hello, are you working?")
+        print(f"✅ Ollama test successful: {response[:50]}...")
+        return True
+    except Exception as e:
+        print(f"❌ Ollama test failed: {e}")
+        return False
+
+# Test connection when module is imported
+if __name__ == "__main__":
+    print("Testing Ollama connection...")
+    test_ollama_connection()
+else:
+    # Quick test on import
+    try:
+        llm.invoke("test")
+        print("✅ Ollama connection verified")
+    except Exception as e:
+        print(f"⚠️ Ollama connection issue: {e}")
+        print("Make sure Ollama is running: ollama serve")
+        print("And model is available: ollama run mistral")
