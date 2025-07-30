@@ -1,46 +1,46 @@
-# 🧠 Offline AI-Powered Document Assistant
+#  Offline AI-Powered Document Assistant
 
 > **An offline chatbot for querying documents using local LLMs via Ollama, LangChain, FAISS & Gradio.**  
 > Fully private. No cloud. Runs locally. Supports PDFs, DOCX, TXT, and CSV.
 
 ![logo](assets/logo.png)
 
-## 📋 Table of Contents
+##  Table of Contents
 
-- [📌 Features](#-features)
-- [🚀 Demo](#-demo)
-- [🛠️ Installation](#️-installation)
-- [📂 Supported File Types](#-supported-file-types)
-- [💻 Usage](#-usage)
-- [📦 One-Click Desktop App (Windows)](#-one-click-desktop-app-windows)
-- [🐳 Docker Support](#-docker-support)
-- [⚙️ Project Structure](#️-project-structure)
-- [🧠 Future Upgrades](#-future-upgrades)
-- [🧑‍💻 Credits](#-credits)
+- [ Features](#-features)
+- [ Demo](#-demo)
+- [ Installation](#️-installation)
+- [ Supported File Types](#-supported-file-types)
+- [ Usage](#-usage)
+- [ One-Click Desktop App (Windows)](#-one-click-desktop-app-windows)
+- [ Docker Support](#-docker-support)
+- [ Project Structure](#️-project-structure)
+- [ Future Upgrades](#-future-upgrades)
+- [ Credits](#-credits)
 
-## 📌 Features
+##  Features
 
-✅ Fully offline document assistant  
-✅ Multi-format support: PDF, DOCX, TXT, CSV  
-✅ Smart chunk-based retrieval with FAISS  
-✅ Uses Ollama with local models (`mistral`, `llama2`, etc.)  
-✅ Per-session memory using LangChain  
-✅ Auto-summarizes uploaded files  
-✅ Shows matched chunks used for each answer  
-✅ Suggests follow-up questions using LLM  
-✅ Exports full Q&A session as `.txt` or `.json`  
-✅ Optional `.exe` for one-click launch  
-✅ Optional Docker container support  
-✅ Friendly Gradio UI with PDF previews  
+ Fully offline document assistant  
+ Multi-format support: PDF, DOCX, TXT, CSV  
+ Smart chunk-based retrieval with FAISS  
+ Uses Ollama with local models (`mistral`, `llama2`, etc.)  
+ Per-session memory using LangChain  
+ Auto-summarizes uploaded files  
+ Shows matched chunks used for each answer  
+ Suggests follow-up questions using LLM  
+ Exports full Q&A session as `.txt` or `.json`  
+ Optional `.exe` for one-click launch  
+ Optional Docker container support  
+ Friendly Gradio UI with PDF previews  
 
-## 🚀 Demo
+##  Demo
 
 ![demo-screenshot](assets/demo.png)  
 > UI includes file upload, chat interface, context highlighting, suggestions, and export buttons.
 
-## 🛠️ Installation
+##  Installation
 
-### ✅ Prerequisites
+###  Prerequisites
 
 - Python 3.10+
 - Ollama installed & running locally (https://ollama.com/)
@@ -50,7 +50,7 @@
 ollama run mistral
 ```
 
-### 🧰 Step-by-Step Setup
+###  Step-by-Step Setup
 
 1. **Clone this repo:**
 
@@ -71,16 +71,16 @@ pip install -r requirements.txt
 python ui_gradio.py
 ```
 
-## 📂 Supported File Types
+##  Supported File Types
 
 | Type | Support |
 |------|---------|
-| `.pdf` | ✅ (with preview) |
-| `.docx` | ✅ |
-| `.txt` | ✅ |
-| `.csv` | ✅ |
+| `.pdf` |  Yes(with preview) |
+| `.docx` | Yes |
+| `.txt` | Yes |
+| `.csv` | Yes |
 
-## 💻 Usage
+##  Usage
 
 1. Upload one or more supported files  
 2. Summaries are auto-generated  
@@ -88,7 +88,7 @@ python ui_gradio.py
 4. View answer + matched chunks + follow-up suggestions  
 5. Export Q&A session as `.txt` or `.json`
 
-## 📦 One-Click Desktop App (Windows)
+##  One-Click Desktop App (Windows)
 
 1. Build executable with:
 
@@ -98,18 +98,18 @@ pyinstaller --onefile --windowed --icon=icon.ico main.py
 
 2. Run `dist/main.exe`
 
-✅ No Python or terminal needed  
-✅ Browser auto-launch or native window (via `pywebview`)
+ No Python or terminal needed  
+ Browser auto-launch or native window (via `pywebview`)
 
-## 🐳 Docker Support
+##  Docker Support
 
-### 📥 Build image:
+###  Build image:
 
 ```bash
 docker build -t offline-pdf-assistant .
 ```
 
-### 🚀 Run:
+###  Run:
 
 ```bash
 docker run -it --rm -p 7860:7860 offline-pdf-assistant
@@ -117,7 +117,7 @@ docker run -it --rm -p 7860:7860 offline-pdf-assistant
 
 Ensure Ollama is running on the host, not inside the container.
 
-## ⚙️ Project Structure
+##  Project Structure
 
 ```
 .
@@ -134,7 +134,7 @@ Ensure Ollama is running on the host, not inside the container.
 └── Dockerfile
 ```
 
-## 🧠 Future Upgrades
+##  Future Upgrades
 
 - [ ] Highlight chunk directly in document view  
 - [ ] Add user login / session-based dashboards  
@@ -142,8 +142,8 @@ Ensure Ollama is running on the host, not inside the container.
 - [ ] Voice input + text-to-speech replies  
 - [ ] Cloud sync (opt-in)
 
-## 🧑‍💻 Credits
+##  Credits
 
-Made with 🧠 by **Aaryaksh Bhatnagar**  
+Made by **Aaryaksh Bhatnagar**  
 B.Tech AI & DS – Arya College of Engineering & IT  
 > Portfolio-ready AI product built from scratch for private LLM workflows
